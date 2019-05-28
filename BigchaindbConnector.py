@@ -1,8 +1,10 @@
-from BlockchainConnector import BlockchainConnector
-from BlockchainConnector import BlockchainConnectorException
+from IBlockchainConnector import BlockchainConnector
+from IBlockchainConnector import BlockchainConnectorException
 
 from bigchaindb_driver import BigchainDB
 from bigchaindb_driver.crypto import generate_keypair
+
+import pandas as pd
 
 class BigchaindbConnector(BlockchainConnector):
 
@@ -11,15 +13,8 @@ class BigchaindbConnector(BlockchainConnector):
     def __init__(self, endpoints = ['http://localhost:9984'], params = None):
         BlockchainConnector.__init__(self, 'Bigchaindb', endpoints)
         self.headers = params
-        try:
-            self.conn = BigchainDB(*self.endpoints, headers = self.headers)
-        except Exception:
-            raise BlockchainConnectorException('BlockchainConnector>> Failed to CONNECT to Bigchaindb '
-                                               'with given endpoints: ' + str(self.endpoints) +
-                                               ' and headers: ' + str(self.headers)
-                                               )
-        else:
-            print('BlockchainConnector>> Successfully connected to Bigchaindb with endpoints: ' + str(self.endpoints))
+        self.conn = BigchainDB(*self.endpoints, headers = self.headers)
+        self.conn.info() #if this fails exception generated
 
     def getConnectorConfig(self):
         config = dict()
@@ -28,11 +23,8 @@ class BigchaindbConnector(BlockchainConnector):
         config['params'] = self.headers
         return config
 
-    def generateKeypair(self, append = True):
-        keys = generate_keypair()
-        if append:
-            self.keypair = keys
-        return keys
+    def generateKeypair(self):
+        return generate_keypair()
 
     def createDataAsset(self, data, desc = None):
         asset = dict()
@@ -42,11 +34,7 @@ class BigchaindbConnector(BlockchainConnector):
             asset['description'] = desc
         return asset
 
-    # if no private/public keys are given, then appended keypair will be tried.
-    def submitAssetCreateTranscation(self, asset, mutable_data, public_key=None, private_key=None):
-        if (public_key == None and private_key == None) and self.keypair == None:
-            raise BlockchainConnectorException('BigchainConnector>> No keypair provided...')
-
+    def submitAssetCreateTranscation(self, asset, mutable_data, public_key, private_key):
         # prepare asset creation for blockchain transaction
         prepared_create_tx = self.conn.transactions.prepare(
             operation = 'CREATE',
@@ -77,21 +65,7 @@ class BigchaindbConnector(BlockchainConnector):
         }
         return resp
 
-    def getAssetBlockInLedger(self, trans_id):
-        # if block_height is None then either trans does not exist,
-        # invalid or simply queued - so not processed yet.
-        block_height = self.conn.blocks.get(txid=trans_id)
-        if block_height:
-            return self.conn.blocks.retrieve(str(block_height))
-        return None
-
-    # if no private public keys are given, then appended keypair will be tried.
-    # this means that the transfer transaction is just an update of the asset
-    # mutable data NOT a change of ownership.
-    def submitAssetAppendTranscation(self, asset_id, prev_trans_id, mutable_data = None, recipient_public_key = None, owner_private_key = None):
-        if (recipient_public_key == None and owner_private_key == None) and self.keypair == None:
-            raise BlockchainConnectorException('BigchainConnector>> No keypair provided...')
-
+    def submitAssetAppendTranscation(self, asset_id, prev_trans_id, mutable_data, recipients_public_key, owners_private_key):
         prev_trans = self.conn.transactions.retrieve(prev_trans_id)
         if not prev_trans:
             return
@@ -116,13 +90,13 @@ class BigchaindbConnector(BlockchainConnector):
             operation = 'TRANSFER',
             asset = transfer_asset,
             inputs = transfer_input,
-            recipients = recipient_public_key if recipient_public_key else self.keypair.public_key,
+            recipients = recipients_public_key,
             metadata = mutable_data
         )
 
         fulfilled_transfer_tx = self.conn.transactions.fulfill(
             prepared_transfer_tx,
-            private_keys = owner_private_key if owner_private_key else self.keypair.private_key,
+            private_keys = owners_private_key,
         )
 
         print('BigChainConnector>> Asset prepared, signed and verified for submission')
@@ -133,11 +107,46 @@ class BigchaindbConnector(BlockchainConnector):
         print('BigChainConnector>> Asset transfer committed to blockchain ledger with transaction id: ' + txid)
 
         resp = {
-            'asset_id': txid,  # CREATE ops have same asset and trans id
+            'asset_id': asset_id,
             'trans_id': txid,
             'success': True
         }
         return resp
 
-    def getAssetTransactions(self, asset_id):
-        return self.conn.transactions.get(asset_id=asset_id)
+    def getAssetBlockInLedger(self, trans_id):
+        # if block_height is None then either trans does not exist,
+        # invalid or simply queued - so not processed yet.
+        block_height = self.conn.blocks.get(txid=trans_id)
+        if block_height:
+            return self.conn.blocks.retrieve(str(block_height))
+        return None
+
+    def getAssetTransactions(self, asset_id, limit=-1):
+        #limit not supported
+        return self.conn.transactions.get(asset_id = asset_id)
+
+
+    def getAsset(self, asset_id):
+        data = self.conn.transactions.get(asset_id = asset_id, operation = 'CREATE')
+        return data[0]['asset']['data']
+
+    def getAssetMutableData(self, asset_id, limit=-1):
+        #limit not supported
+        data = self.conn.transactions.get(asset_id = asset_id)
+        ml = []
+        for m in data:
+            ml.append(m['metadata'])
+        return ml
+
+    def getAssetOwnership(self, asset_id):
+        #limit not supported
+        data = self.conn.transactions.get(asset_id=asset_id)
+        ml = []
+        for m in data:
+            obj = dict()
+            obj['trans_id'] = m['id']
+            obj['operation'] = m['operation']
+            obj['owners_before'] = m['inputs'][0]['owners_before']
+            obj['current_owners'] = m['outputs'][0]['public_keys']
+            ml.append(obj)
+        return ml
