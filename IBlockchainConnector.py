@@ -12,13 +12,13 @@ class BlockchainConnector:
     def generateKeypair(self):
         pass
 
-    def createDataAsset(self):
+    def createDataAsset(self, data, desc):
         pass
 
-    def submitAssetCreateTranscation(self, asset, mutable_data, public_key, private_key):
+    def submitAssetCreateTransaction(self, asset, asset_type, mutable_data, public_key, private_key):
         pass
 
-    def submitAssetAppendTranscation(self, asset_id, prev_trans_id, mutable_data, recipients_public_key, owners_private_key):
+    def submitAssetAppendTransaction(self, asset_id, asset_type, prev_trans_id, mutable_data, recipients_public_key, owners_private_key):
         pass
 
     def getAssetBlockInLedger(self, trans_id):

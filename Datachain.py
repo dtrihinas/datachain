@@ -1,14 +1,16 @@
 from BigchaindbConnector import BigchaindbConnector
+from HyperledgerConnector import HyperledgerConnector
 
 import pandas as pd
 
 class Datachain():
 
     def __init__(self, backend, endpoints, params=None):
+        self.keypair = None
+
         if backend == 'Bigchaindb':
             try:
                 self.connector = BigchaindbConnector(endpoints, params)
-                self.keypair = None
             except Exception:
                 raise DatachainException(
                     'Datachain>> Failed to CONNECT to Bigchaindb '
@@ -16,6 +18,16 @@ class Datachain():
                 )
             else:
                 print('Datachain>> Successfully connected to ' + backend + ' with endpoints: ' + str(endpoints) + '...')
+        elif backend == 'Hyperledger':
+            try:
+                self.connector = HyperledgerConnector(endpoints, params)
+                # hyperledger rest api does not use keypair, rather api key
+                self.keypair = {'private_key': ' ', 'public_key': ' '}
+            except Exception:
+                raise DatachainException(
+                    'Datachain>> Failed to CONNECT to Hyperledger '
+                    'with given endpoints: ' + str(endpoints) + ' and params: ' + str(params) + '...'
+                )
         else:
             raise DatachainException('Datachain>> backend: ' + backend + ' is not supported...')
 
@@ -43,7 +55,8 @@ class Datachain():
         return a
 
     # if no private/public keys are given, then appended keypair will be tried.
-    def submitAssetCreateTranscation(self, asset, mutable_data, public_key=None, private_key=None):
+    def submitAssetCreateTransaction(self, asset, asset_type=None,
+                                     mutable_data=None, public_key=None, private_key=None):
         if (public_key is None and private_key is None) and self.keypair is None:
             raise DatachainException('Datachain>> No keypair provided...')
 
@@ -51,7 +64,7 @@ class Datachain():
         private_key = private_key if private_key else self.keypair['private_key']
 
         try:
-            resp = self.connector.submitAssetCreateTranscation(asset, mutable_data, public_key, private_key)
+            resp = self.connector.submitAssetCreateTransaction(asset, asset_type, mutable_data, public_key, private_key)
         except Exception as e:
             raise DatachainException('Datachain>> submitted asset creation transaction FAILED with ...' + e.__str__())
         return resp
@@ -59,8 +72,8 @@ class Datachain():
     # if no private public keys are given, then appended keypair will be tried.
     # this means that the transfer transaction is just an update of the asset
     # mutable data NOT a change of ownership.
-    def submitAssetAppendTranscation(self, asset_id, prev_trans_id, mutable_data,
-                                     recipients_public_key=None, owners_private_key=None):
+    def submitAssetAppendTransaction(self, asset_id, asset_type=None, prev_trans_id=None,
+                                     mutable_data=None, recipients_public_key=None, owners_private_key=None):
         if (recipients_public_key is None and owners_private_key is None) and self.keypair is None:
             raise DatachainException('Datachain>> No keypair provided...')
 
@@ -68,7 +81,7 @@ class Datachain():
         owners_private_key = owners_private_key if owners_private_key else self.keypair['private_key']
         print(recipients_public_key,' ', owners_private_key)
         try:
-            resp = self.connector.submitAssetAppendTranscation(asset_id, prev_trans_id, mutable_data,
+            resp = self.connector.submitAssetAppendTransaction(asset_id, asset_type, prev_trans_id, mutable_data,
                                                                recipients_public_key, owners_private_key)
         except Exception as e:
             raise DatachainException('Datachain>> submitted asset append transaction FAILED with ...' + e.__str__())
