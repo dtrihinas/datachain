@@ -1,10 +1,8 @@
 from IBlockchainConnector import BlockchainConnector
-from IBlockchainConnector import BlockchainConnectorException
 
 from bigchaindb_driver import BigchainDB
 from bigchaindb_driver.crypto import generate_keypair
 
-import pandas as pd
 
 class BigchaindbConnector(BlockchainConnector):
 
@@ -34,7 +32,7 @@ class BigchaindbConnector(BlockchainConnector):
             asset['description'] = desc
         return asset
 
-    def submitAssetCreateTranscation(self, asset, mutable_data, public_key, private_key):
+    def submitAssetCreateTransaction(self, asset, asset_type, mutable_data, public_key, private_key):
         # prepare asset creation for blockchain transaction
         prepared_create_tx = self.conn.transactions.prepare(
             operation = 'CREATE',
@@ -65,7 +63,7 @@ class BigchaindbConnector(BlockchainConnector):
         }
         return resp
 
-    def submitAssetAppendTranscation(self, asset_id, prev_trans_id, mutable_data, recipients_public_key, owners_private_key):
+    def submitAssetAppendTransaction(self, asset_id, asset_type, prev_trans_id, mutable_data, recipients_public_key, owners_private_key):
         prev_trans = self.conn.transactions.retrieve(prev_trans_id)
         if not prev_trans:
             return
