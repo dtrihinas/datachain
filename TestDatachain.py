@@ -1,7 +1,7 @@
 from Datachain import Datachain
 
 import pandas as pd
-pd.set_option('display.max_colwidth', 1000)
+pd.set_option('display.max_colwidth', 100)
 pd.set_option('display.max_columns',10)
 
 dc = Datachain('Bigchaindb', ['http://localhost:9984'])
@@ -25,6 +25,7 @@ mdata = {'km': '0'}
 resp = dc.submitAssetCreateTranscation(asset, mdata)
 print(resp)
 
+#print(dc.getAssetBlockInLedger(resp['trans_id']))
 print(dc.getAssetBlockInLedger(resp['trans_id'], res_type='pandas'))
 
 mdata = {'km': '30'}
@@ -35,10 +36,11 @@ mdata = {'km': '1000', 'color': 'blue'}
 resp = dc.submitAssetAppendTranscation(aid, resp['trans_id'], mdata)
 
 s1 = dc.getAssetTransactions(aid, res_type='pandas', latest=True)
-s2 = dc.getAssetTransactions(aid, latest=True)
+s2 = dc.getAssetTransactions(aid, res_type='collection', latest=True)
 print(s1.columns)
 print(s1['id'])
 print(s2[0]['id']) # must be the same with above
+
 
 a1 = dc.getAsset(aid, res_type='pandas')
 a2 = dc.getAsset(aid)

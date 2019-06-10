@@ -76,64 +76,57 @@ class Datachain():
 
     def getAssetBlockInLedger(self, trans_id, res_type = 'raw'):
         r = self.connector.getAssetBlockInLedger(trans_id)
-        if res_type == 'pandas':
-            return pd.DataFrame(r)
-        return r
+        return r if res_type == 'raw' else self._format_response(r, res_type)
 
-    def getAssetTransactions(self, asset_id, latest=False, descending=False, res_type='raw'):
+    def getAssetTransactions(self, asset_id, latest=False, sorting=False, res_type='raw'):
         data = self.connector.getAssetTransactions(asset_id)
-        if res_type == 'pandas':
-            df = pd.DataFrame(data)
-            if latest:
-                df = df[-1:]
-            if descending:
-                df = df.sort_index(ascending=False)
-            return df
-
-        if latest:
-            data = data[-1: ]
-        if descending:
-            data = data.reverse()
-        return data
+        return data if res_type == 'raw' else self._format_response(data, res_type, latest, sorting)
 
     def getAsset(self, asset_id, res_type='raw'):
         data = self.connector.getAsset(asset_id)
         if res_type == 'pandas':
-            df = pd.Series(data)
-            return df
-        return data
+            res_type = 'pandas.Series'
+        return data if res_type == 'raw' else self._format_response(data, res_type)
 
-    def getAssetMutableData(self, asset_id, latest=False, descending=False, res_type='raw'):
+    def getAssetMutableData(self, asset_id, latest=False, sorting=False, res_type='raw'):
         data = self.connector.getAssetMutableData(asset_id)
-        if res_type == 'pandas':
-            df = pd.DataFrame(data)
-            if latest:
-                df = df[-1:]
-            if descending:
-                df = df.sort_index(ascending=False)
-            return df
+        return data if res_type == 'raw' else self._format_response(data, res_type, latest, sorting)
 
-        if latest:
-            data = data[-1:]
-        if descending:
-            data = data.reverse()
-        return data
-
-    def getAssetOwnership(self, asset_id, latest=False, descending=False, res_type='raw'):
+    def getAssetOwnership(self, asset_id, latest=False, sorting=False, res_type='raw'):
         data = self.connector.getAssetOwnership(asset_id)
-        if res_type == 'pandas':
-            df = pd.DataFrame(data)
-            if latest:
-                df = df[-1:]
-            if descending:
-                df = df.sort_index(ascending=False)
-            return df
+        return data if res_type == 'raw' else self._format_response(data, res_type, latest, sorting)
 
+    def _format_response(self, res, res_type, latest=False, sorting=False):
+        # fix below hack to check for collections
+        if not isinstance(res, (dict, list)):
+            raise DatachainException('Datachain>> Response must be a collection to be further formated...')
+
+        if 'pandas' in res_type:
+            r = None
+            if res_type == 'pandas.Series':
+                r = pd.Series(res)
+            else:
+                r = pd.DataFrame(res)
+            if latest:
+                r = r[-1:]
+            if sorting:
+                r = r.sort_index(ascending=False) #sorting in descending order for recent events first
+            return r
+
+        if res_type == 'xml':
+            return res
+
+        if res_type == 'json':
+            return res
+
+        # collection
         if latest:
-            data = data[-1:]
-        if descending:
-            data = data.reverse()
-        return data
+            res = res[-1:]
+            print("hello world")
+        if sorting:
+            res.reverse()
+
+        return res
 
 
 class DatachainException(Exception):
