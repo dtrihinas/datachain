@@ -22,7 +22,7 @@ asset = dc.createDataAsset(asset_data)
 #asset data that is mutable
 mdata = {'km': '0'}
 
-resp = dc.submitAssetCreateTranscation(asset, mdata)
+resp = dc.submitAssetCreateTransaction(asset, mutable_data=mdata)
 print(resp)
 
 #print(dc.getAssetBlockInLedger(resp['trans_id']))
@@ -30,10 +30,10 @@ print(dc.getAssetBlockInLedger(resp['trans_id'], res_type='pandas'))
 
 mdata = {'km': '30'}
 aid = resp['asset_id']
-resp = dc.submitAssetAppendTranscation(aid, resp['trans_id'], mdata)
+resp = dc.submitAssetAppendTransaction(aid, prev_trans_id=resp['trans_id'], mutable_data=mdata)
 
 mdata = {'km': '1000', 'color': 'blue'}
-resp = dc.submitAssetAppendTranscation(aid, resp['trans_id'], mdata)
+resp = dc.submitAssetAppendTransaction(aid, prev_trans_id=resp['trans_id'], mutable_data=mdata)
 
 s1 = dc.getAssetTransactions(aid, res_type='pandas', latest=True)
 s2 = dc.getAssetTransactions(aid, res_type='collection', latest=True)
@@ -58,7 +58,8 @@ print('bob private key: ' + bob['private_key'])
 print('bob public key: ' + bob['public_key'])
 
 mdata = {'km': '2500', 'color': 'blue'}
-resp = dc.submitAssetAppendTranscation(aid, resp['trans_id'], mdata, recipients_public_key=bob['public_key'])
+resp = dc.submitAssetAppendTransaction(aid, prev_trans_id=resp['trans_id'], mutable_data=mdata,
+                                       recipients_public_key=bob['public_key'])
 
 print(dc.getAssetTransactions(aid, res_type='pandas'))
 print(resp)
@@ -67,7 +68,8 @@ kate = dc.generateKeypair()
 print('private key: ' + kate['private_key'])
 print('public key: ' + kate['public_key'])
 mdata = {'km': '2750', 'color': 'red'}
-resp = dc.submitAssetAppendTranscation(aid, resp['trans_id'], mdata, recipients_public_key=kate['public_key'], owners_private_key=bob['private_key'])
+resp = dc.submitAssetAppendTransaction(aid, prev_trans_id=resp['trans_id'], mutable_data=mdata,
+                                       recipients_public_key=kate['public_key'], owners_private_key=bob['private_key'])
 
 print(dc.getAssetTransactions(aid))
 print(resp)
