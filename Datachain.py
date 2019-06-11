@@ -3,88 +3,74 @@ from HyperledgerConnector import HyperledgerConnector
 
 import pandas as pd
 
+
 class Datachain():
 
     def __init__(self, backend, endpoints, params=None):
-        self.keypair = None
+        self.saved_participant = None
 
-        if backend == 'Bigchaindb':
-            try:
+        try: #connect to backend
+            if backend == 'Bigchaindb':
                 self.connector = BigchaindbConnector(endpoints, params)
-            except Exception:
-                raise DatachainException(
-                    'Datachain>> Failed to CONNECT to Bigchaindb '
-                    'with given endpoints: ' + str(endpoints) + ' and params: ' + str(params) + '...'
-                )
-            else:
-                print('Datachain>> Successfully connected to ' + backend + ' with endpoints: ' + str(endpoints) + '...')
-        elif backend == 'Hyperledger':
-            try:
+            elif backend == 'Hyperledger':
                 self.connector = HyperledgerConnector(endpoints, params)
-                # hyperledger rest api does not use keypair, rather api key
-                self.keypair = {'private_key': ' ', 'public_key': ' '}
-            except Exception:
-                raise DatachainException(
-                    'Datachain>> Failed to CONNECT to Hyperledger '
-                    'with given endpoints: ' + str(endpoints) + ' and params: ' + str(params) + '...'
-                )
+        except Exception:
+            raise DatachainException(
+                'Datachain>> Failed to CONNECT to ' + backend +
+                'with given endpoints: ' + str(endpoints) + ' and params: ' + str(params) + '...'
+            )
         else:
-            raise DatachainException('Datachain>> backend: ' + backend + ' is not supported...')
+            print('Datachain>> Successfully connected to ' + backend + ' with endpoints: ' + str(endpoints) + '...')
 
     def getBackendConfig(self):
         return self.connector.getConnectorConfig()
 
-    def generateKeypair(self, append=False):
+    def createParticipant(self, participant=None, save=False):
         try:
-            k = self.connector.generateKeypair()
-            keys = {'private_key': k.private_key, 'public_key': k.public_key}
-            if append:
-                self.keypair = keys
+            p = self.connector.createParticipant(participant)
+            if save:
+                self.saved_participant = p
         except Exception:
-            raise DatachainException('Datachain>> backend could not generate keypair...')
-        return keys
+            raise DatachainException('Datachain>> backend could not generate blockchain participant...')
+        return p
 
-    def createDataAsset(self, data, desc=None):
+    def updParticipant(self, participant, save=False):
         try:
-            a = self.connector.createDataAsset(data, desc)
+            p = self.connector.updateParticipant(participant)
+            if save:
+                self.saved_participant = p
         except Exception:
-            raise DatachainException('Datachain>> Failed to CREATE asset... ' +
-                                     'Maybe data provided is not a collection (e.g., dict)...')
-        else:
-            print('Datachain>> Successfully created asset with data: ' + str(data))
-        return a
+            raise DatachainException('Datachain>> backend could not update blockchain participant...')
+        return p
 
-    # if no private/public keys are given, then appended keypair will be tried.
-    def submitAssetCreateTransaction(self, asset, asset_type=None,
-                                     mutable_data=None, public_key=None, private_key=None):
-        if (public_key is None and private_key is None) and self.keypair is None:
-            raise DatachainException('Datachain>> No keypair provided...')
 
-        public_key = public_key if public_key else self.keypair['public_key']
-        private_key = private_key if private_key else self.keypair['private_key']
-
+    def submitAssetCreateTransaction(self, asset, asset_type=None, ass_data=None, owner=None):
+        if owner is None and self.saved_participant is None:
+            raise DatachainException('Datachain>> No participant previously saved or provided...')
+        if owner is None:
+            owner = self.saved_participant
+        resp = None
         try:
-            resp = self.connector.submitAssetCreateTransaction(asset, asset_type, mutable_data, public_key, private_key)
+            resp = self.connector.submitAssetCreateTransaction(asset, asset_type, ass_data, owner)
         except Exception as e:
-            raise DatachainException('Datachain>> submitted asset creation transaction FAILED with ...' + e.__str__())
+            raise DatachainException('Datachain>> submitted asset CREATE transaction FAILED with ...' + e.__str__())
         return resp
 
-    # if no private public keys are given, then appended keypair will be tried.
-    # this means that the transfer transaction is just an update of the asset
-    # mutable data NOT a change of ownership.
-    def submitAssetAppendTransaction(self, asset_id, asset_type=None, prev_trans_id=None,
-                                     mutable_data=None, recipients_public_key=None, owners_private_key=None):
-        if (recipients_public_key is None and owners_private_key is None) and self.keypair is None:
-            raise DatachainException('Datachain>> No keypair provided...')
 
-        recipients_public_key = recipients_public_key if recipients_public_key else self.keypair['public_key']
-        owners_private_key = owners_private_key if owners_private_key else self.keypair['private_key']
-        print(recipients_public_key,' ', owners_private_key)
+    def submitAssetAppendTransaction(self, asset_id, asset_type=None,  ass_data=None, prev_trans_id=None,
+                                     prev_owner=None, new_owner=None):
+        if (prev_owner is None and new_owner is None) and self.saved_participant is None:
+            raise DatachainException('Datachain>> No participant previously saved or provided...')
+
+        if prev_owner is None and new_owner is None:
+            prev_owner = self.saved_participant
+            new_owner = self.saved_participant
+
         try:
-            resp = self.connector.submitAssetAppendTransaction(asset_id, asset_type, prev_trans_id, mutable_data,
-                                                               recipients_public_key, owners_private_key)
+            resp = self.connector.submitAssetAppendTransaction(asset_id, asset_type, ass_data, prev_trans_id,
+                                                               prev_owner, new_owner)
         except Exception as e:
-            raise DatachainException('Datachain>> submitted asset append transaction FAILED with ...' + e.__str__())
+            raise DatachainException('Datachain>> submitted asset APPEND transaction FAILED with ...' + e.__str__())
         return resp
 
     def getAssetBlockInLedger(self, trans_id, res_type = 'raw'):

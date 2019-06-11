@@ -21,30 +21,34 @@ class BigchaindbConnector(BlockchainConnector):
         config['params'] = self.headers
         return config
 
-    def generateKeypair(self):
-        return generate_keypair()
+    def createParticipant(self, participant=None):
+        #for bigchain a participant is just a set of private/public keys
+        k = generate_keypair()
+        keys = dict()
+        keys['private_key'] = k.private_key
+        keys['public_key'] = k.public_key
+        return keys
 
-    def createDataAsset(self, data, desc = None):
+    def updateParticipant(self, participant=None):
+        return self.createParticipant()
+
+    def submitAssetCreateTransaction(self, casset, asset_type, ass_data, owner):
         asset = dict()
         # In asset there must be a 'data' property with the data in it.
-        asset['data'] = data
-        if desc:
-            asset['description'] = desc
-        return asset
+        asset['data'] = casset
 
-    def submitAssetCreateTransaction(self, asset, asset_type, mutable_data, public_key, private_key):
         # prepare asset creation for blockchain transaction
         prepared_create_tx = self.conn.transactions.prepare(
             operation = 'CREATE',
-            signers = public_key if public_key else self.keypair.public_key,
+            signers = owner['public_key'],
             asset = asset,
-            metadata = mutable_data
+            metadata = ass_data
         )
 
         # The transaction now needs to be fulfilled by signing it with the private key:
         fulfilled_create_tx = self.conn.transactions.fulfill(
             prepared_create_tx,
-            private_keys=private_key if private_key else self.keypair.private_key
+            private_keys=owner['private_key']
         )
 
         print('BigChainConnector>> Asset prepared, signed and verified for submission')
@@ -63,7 +67,7 @@ class BigchaindbConnector(BlockchainConnector):
         }
         return resp
 
-    def submitAssetAppendTransaction(self, asset_id, asset_type, prev_trans_id, mutable_data, recipients_public_key, owners_private_key):
+    def submitAssetAppendTransaction(self, asset_id, asset_type, ass_data, prev_trans_id, prev_owner, new_owner):
         prev_trans = self.conn.transactions.retrieve(prev_trans_id)
         if not prev_trans:
             return
@@ -88,13 +92,13 @@ class BigchaindbConnector(BlockchainConnector):
             operation = 'TRANSFER',
             asset = transfer_asset,
             inputs = transfer_input,
-            recipients = recipients_public_key,
-            metadata = mutable_data
+            recipients = new_owner['public_key'],
+            metadata = ass_data
         )
 
         fulfilled_transfer_tx = self.conn.transactions.fulfill(
             prepared_transfer_tx,
-            private_keys = owners_private_key,
+            private_keys = prev_owner['private_key'],
         )
 
         print('BigChainConnector>> Asset prepared, signed and verified for submission')

@@ -7,33 +7,31 @@ pd.set_option('display.max_columns',10)
 dc = Datachain('Bigchaindb', ['http://localhost:9984'])
 print(dc.getBackendConfig())
 
-alice = dc.generateKeypair(append=True)
+alice = dc.createParticipant(save=True)
 print('alice private key: ' + alice['private_key'])
 print('alice public key: ' + alice['public_key'])
 
-asset_data = {
+asset = {
     'bike_serial_number': 'abcd1234',
     'bike_manufacturer': 'bkfab',
     'bike_height_in_cm': 85,
 }
 
-asset = dc.createDataAsset(asset_data)
-
 #asset data that is mutable
 mdata = {'km': '0'}
 
-resp = dc.submitAssetCreateTransaction(asset, mutable_data=mdata)
+resp = dc.submitAssetCreateTransaction(asset, ass_data=mdata)
 print(resp)
 
-#print(dc.getAssetBlockInLedger(resp['trans_id']))
+print(dc.getAssetBlockInLedger(resp['trans_id']))
 print(dc.getAssetBlockInLedger(resp['trans_id'], res_type='pandas'))
 
 mdata = {'km': '30'}
 aid = resp['asset_id']
-resp = dc.submitAssetAppendTransaction(aid, prev_trans_id=resp['trans_id'], mutable_data=mdata)
+resp = dc.submitAssetAppendTransaction(aid, ass_data=mdata, prev_trans_id=resp['trans_id'])
 
 mdata = {'km': '1000', 'color': 'blue'}
-resp = dc.submitAssetAppendTransaction(aid, prev_trans_id=resp['trans_id'], mutable_data=mdata)
+resp = dc.submitAssetAppendTransaction(aid, ass_data=mdata, prev_trans_id=resp['trans_id'])
 
 s1 = dc.getAssetTransactions(aid, res_type='pandas', latest=True)
 s2 = dc.getAssetTransactions(aid, res_type='collection', latest=True)
@@ -53,23 +51,25 @@ print(m1)
 print(m2)
 
 
-bob = dc.generateKeypair()
+bob = dc.createParticipant()
 print('bob private key: ' + bob['private_key'])
 print('bob public key: ' + bob['public_key'])
 
 mdata = {'km': '2500', 'color': 'blue'}
-resp = dc.submitAssetAppendTransaction(aid, prev_trans_id=resp['trans_id'], mutable_data=mdata,
-                                       recipients_public_key=bob['public_key'])
+resp = dc.submitAssetAppendTransaction(aid, ass_data=mdata, prev_trans_id=resp['trans_id'],
+                                       new_owner=bob, prev_owner=alice)
 
 print(dc.getAssetTransactions(aid, res_type='pandas'))
 print(resp)
 
-kate = dc.generateKeypair()
+kate = dc.createParticipant()
 print('private key: ' + kate['private_key'])
 print('public key: ' + kate['public_key'])
+
 mdata = {'km': '2750', 'color': 'red'}
-resp = dc.submitAssetAppendTransaction(aid, prev_trans_id=resp['trans_id'], mutable_data=mdata,
-                                       recipients_public_key=kate['public_key'], owners_private_key=bob['private_key'])
+
+resp = dc.submitAssetAppendTransaction(aid, ass_data=mdata, prev_trans_id=resp['trans_id'],
+                                       new_owner=kate, prev_owner=bob)
 
 print(dc.getAssetTransactions(aid))
 print(resp)

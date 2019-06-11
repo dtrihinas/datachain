@@ -4,21 +4,20 @@ class BlockchainConnector:
     def __init__(self, backend, endpoints):
         self.backend = backend
         self.endpoints = endpoints
-        self.keypair = None
 
     def getConnectorConfig(self):
         pass
 
-    def generateKeypair(self):
+    def createParticipant(self, participant):
         pass
 
-    def createDataAsset(self, data, desc):
+    def updateParticipant(self, participant):
         pass
 
-    def submitAssetCreateTransaction(self, asset, asset_type, mutable_data, public_key, private_key):
+    def submitAssetCreateTransaction(self, asset, asset_type, ass_data, owner):
         pass
 
-    def submitAssetAppendTransaction(self, asset_id, asset_type, prev_trans_id, mutable_data, recipients_public_key, owners_private_key):
+    def submitAssetAppendTransaction(self, asset_id, asset_type, ass_data, prev_trans_id, prev_owner, new_owner):
         pass
 
     def getAssetBlockInLedger(self, trans_id):
