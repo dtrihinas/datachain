@@ -21,7 +21,7 @@ class BigchaindbConnector(BlockchainConnector):
         config['params'] = self.headers
         return config
 
-    def createParticipant(self, participant=None):
+    def createParticipant(self, participant=None, participant_type=None):
         #for bigchain a participant is just a set of private/public keys
         k = generate_keypair()
         keys = dict()
@@ -29,7 +29,7 @@ class BigchaindbConnector(BlockchainConnector):
         keys['public_key'] = k.public_key
         return keys
 
-    def updateParticipant(self, participant=None):
+    def updateParticipant(self, participant=None, participant_type=None):
         return self.createParticipant()
 
     def submitAssetCreateTransaction(self, casset, asset_type, ass_data, owner):
@@ -128,7 +128,7 @@ class BigchaindbConnector(BlockchainConnector):
         return self.conn.transactions.get(asset_id = asset_id)
 
 
-    def getAsset(self, asset_id):
+    def getAsset(self, asset_id, asset_type=None):
         data = self.conn.transactions.get(asset_id = asset_id, operation = 'CREATE')
         return data[0]['asset']['data']
 

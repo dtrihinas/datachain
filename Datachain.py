@@ -25,18 +25,18 @@ class Datachain():
     def getBackendConfig(self):
         return self.connector.getConnectorConfig()
 
-    def createParticipant(self, participant=None, save=False):
+    def createParticipant(self, participant=None, participant_type=None, save=False):
         try:
-            p = self.connector.createParticipant(participant)
+            p = self.connector.createParticipant(participant, participant_type)
             if save:
                 self.saved_participant = p
         except Exception:
             raise DatachainException('Datachain>> backend could not generate blockchain participant...')
         return p
 
-    def updParticipant(self, participant, save=False):
+    def updParticipant(self, participant, participant_type=None, save=False):
         try:
-            p = self.connector.updateParticipant(participant)
+            p = self.connector.updateParticipant(participant, participant_type)
             if save:
                 self.saved_participant = p
         except Exception:
@@ -81,8 +81,8 @@ class Datachain():
         data = self.connector.getAssetTransactions(asset_id)
         return data if res_type == 'raw' else self._format_response(data, res_type, latest, sorting)
 
-    def getAsset(self, asset_id, res_type='raw'):
-        data = self.connector.getAsset(asset_id)
+    def getAsset(self, asset_id, asset_type=None, res_type='raw'):
+        data = self.connector.getAsset(asset_id, asset_type)
         if res_type == 'pandas':
             res_type = 'pandas.Series'
         return data if res_type == 'raw' else self._format_response(data, res_type)

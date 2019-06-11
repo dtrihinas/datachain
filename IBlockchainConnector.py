@@ -8,10 +8,10 @@ class BlockchainConnector:
     def getConnectorConfig(self):
         pass
 
-    def createParticipant(self, participant):
+    def createParticipant(self, participant, participant_type):
         pass
 
-    def updateParticipant(self, participant):
+    def updateParticipant(self, participant, participant_type):
         pass
 
     def submitAssetCreateTransaction(self, asset, asset_type, ass_data, owner):
@@ -26,7 +26,7 @@ class BlockchainConnector:
     def getAssetTransactions(self, asset_id, limit=-1):
         pass
 
-    def getAsset(self, asset_id):
+    def getAsset(self, asset_id, asset_type):
         pass
 
     def getAssetMutableData(self, asset_id, limit=-1):
