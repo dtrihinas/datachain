@@ -38,9 +38,7 @@ class HyperledgerConnector(BlockchainConnector):
             'data': r.json(),
             'status': r.status_code
         }
-
         return resp
-
 
     def updateParticipant(self, participant, participant_type):
         url = self.endpoints + participant_type
@@ -56,44 +54,62 @@ class HyperledgerConnector(BlockchainConnector):
     def submitAssetCreateTransaction(self, asset, asset_type, ass_data, owner):
         url = self.endpoints + asset_type
         r = requests.post(url, asset, headers=self.headers)
-
+        data = r.json()
+        tid = data.get('transactionId') #only transactions have id, not assets
         resp = {
-            'data': r.json(),
-            'status': r.status_code
+            'data': data,
+            'status': r.status_code,
+            'transactionId': tid
         }
-
         return resp
 
     def submitAssetAppendTransaction(self, asset_id, asset_type, ass_data, prev_trans_id, prev_owner, new_owner):
         url = self.endpoints + asset_type + '/' + asset_id
         r = requests.put(url, ass_data, headers=self.headers)
-
+        data = r.json()
+        tid = data.get('transactionId')  # only transactions have id, not assets
         resp = {
-            'data': r.json(),
-            'status': r.status_code
+            'data': data,
+            'status': r.status_code,
+            'transactionId': tid
         }
-
         return resp
 
-    def getAssetBlockInLedger(self, trans_id):
-        pass
+    def getAssetBlockInLedger(self, trans_id, trans_type):
+        url = self.endpoints + trans_type + '/' + trans_id
+        r = requests.get(url, headers=self.headers)
+        if r.status_code == 200:
+            return r.json()
+        return None
 
-    def getAssetTransactions(self, asset_id, limit=-1):
-        pass
+    def getAssetTransactions(self, asset_id, asset_type,  trans_type):
+        asset = self.getAsset(asset_id, asset_type)
+        print(asset)
+        if asset is None:
+            return None
+        field_id = ''
+        for k,v in asset.items():
+            if v == asset_id:
+                field_id = k
+        url = self.endpoints + trans_type
+        params = dict()
+        params['filter'] = '{"' + field_id + '":"' + asset_id + '"}'
+
+        r = requests.get(url, headers=self.headers, params=params)
+        if r.status_code == 200:
+            return r.json()
 
     def getAsset(self, asset_id, asset_type):
         url = self.endpoints + asset_type + '/' + asset_id
         r = requests.get(url, headers=self.headers)
+        if r.status_code == 200:
+            return r.json()
+        return None
 
-        resp = {
-            'data': r.json(),
-            'status': r.status_code
-        }
-
-        return resp
-
-    def getAssetMutableData(self, asset_id, limit=-1):
+    def getAssetMutableData(self, asset_id, asset_type):
+        # not applicable for hyperledger
+        # assets can be altered by owner through new transaction
         pass
 
-    def getAssetOwnership(self, asset_id, limit=-1):
+    def getAssetOwnership(self, asset_id, asset_type):
         pass
