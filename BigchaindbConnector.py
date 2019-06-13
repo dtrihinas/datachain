@@ -115,7 +115,7 @@ class BigchaindbConnector(BlockchainConnector):
         }
         return resp
 
-    def getAssetBlockInLedger(self, trans_id):
+    def getAssetBlockInLedger(self, trans_id, trans_type=None):
         # if block_height is None then either trans does not exist,
         # invalid or simply queued - so not processed yet.
         block_height = self.conn.blocks.get(txid=trans_id)
@@ -123,16 +123,15 @@ class BigchaindbConnector(BlockchainConnector):
             return self.conn.blocks.retrieve(str(block_height))
         return None
 
-    def getAssetTransactions(self, asset_id, limit=-1):
-        #limit not supported
+    def getAssetTransactions(self, asset_id, asset_type=None, trans_type=None):
+        #TODO use query data
         return self.conn.transactions.get(asset_id = asset_id)
-
 
     def getAsset(self, asset_id, asset_type=None):
         data = self.conn.transactions.get(asset_id = asset_id, operation = 'CREATE')
         return data[0]['asset']['data']
 
-    def getAssetMutableData(self, asset_id, limit=-1):
+    def getAssetMutableData(self, asset_id, asset_type=None):
         #limit not supported
         data = self.conn.transactions.get(asset_id = asset_id)
         ml = []
@@ -140,7 +139,7 @@ class BigchaindbConnector(BlockchainConnector):
             ml.append(m['metadata'])
         return ml
 
-    def getAssetOwnership(self, asset_id):
+    def getAssetOwnership(self, asset_id, asset_type=None):
         #limit not supported
         data = self.conn.transactions.get(asset_id=asset_id)
         ml = []
