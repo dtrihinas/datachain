@@ -20,19 +20,19 @@ class BlockchainConnector:
     def submitAssetAppendTransaction(self, asset_id, asset_type, ass_data, prev_trans_id, prev_owner, new_owner):
         pass
 
-    def getAssetBlockInLedger(self, trans_id):
+    def getAssetBlockInLedger(self, trans_id, trans_type):
         pass
 
-    def getAssetTransactions(self, asset_id, limit=-1):
+    def getAssetTransactions(self, asset_id, asset_type,  trans_type):
         pass
 
     def getAsset(self, asset_id, asset_type):
         pass
 
-    def getAssetMutableData(self, asset_id, limit=-1):
+    def getAssetMutableData(self, asset_id, asset_type):
         pass
 
-    def getAssetOwnership(self, asset_id, limit=-1):
+    def getAssetOwnership(self, asset_id, asset_type):
         pass
 
 class BlockchainConnectorException(Exception):

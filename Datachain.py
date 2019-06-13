@@ -73,12 +73,13 @@ class Datachain():
             raise DatachainException('Datachain>> submitted asset APPEND transaction FAILED with ...' + e.__str__())
         return resp
 
-    def getAssetBlockInLedger(self, trans_id, res_type = 'raw'):
-        r = self.connector.getAssetBlockInLedger(trans_id)
+    def getAssetBlockInLedger(self, trans_id, trans_type= None, res_type = 'raw'):
+        r = self.connector.getAssetBlockInLedger(trans_id, trans_type)
         return r if res_type == 'raw' else self._format_response(r, res_type)
 
-    def getAssetTransactions(self, asset_id, latest=False, sorting=False, res_type='raw'):
-        data = self.connector.getAssetTransactions(asset_id)
+    def getAssetTransactions(self, asset_id, asset_type=None, trans_type=None,
+                             latest=False, sorting=False, res_type='raw'):
+        data = self.connector.getAssetTransactions(asset_id, asset_type, trans_type)
         return data if res_type == 'raw' else self._format_response(data, res_type, latest, sorting)
 
     def getAsset(self, asset_id, asset_type=None, res_type='raw'):
@@ -87,12 +88,12 @@ class Datachain():
             res_type = 'pandas.Series'
         return data if res_type == 'raw' else self._format_response(data, res_type)
 
-    def getAssetMutableData(self, asset_id, latest=False, sorting=False, res_type='raw'):
-        data = self.connector.getAssetMutableData(asset_id)
+    def getAssetMutableData(self, asset_id, asset_type=None, latest=False, sorting=False, res_type='raw'):
+        data = self.connector.getAssetMutableData(asset_id, asset_type)
         return data if res_type == 'raw' else self._format_response(data, res_type, latest, sorting)
 
-    def getAssetOwnership(self, asset_id, latest=False, sorting=False, res_type='raw'):
-        data = self.connector.getAssetOwnership(asset_id)
+    def getAssetOwnership(self, asset_id, asset_type=None, latest=False, sorting=False, res_type='raw'):
+        data = self.connector.getAssetOwnership(asset_id, asset_type)
         return data if res_type == 'raw' else self._format_response(data, res_type, latest, sorting)
 
     def _format_response(self, res, res_type, latest=False, sorting=False):
