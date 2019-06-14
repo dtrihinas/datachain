@@ -63,7 +63,7 @@ class BigchaindbConnector(BlockchainConnector):
         resp = {
             'asset_id': txid, #CREATE ops have same asset and trans id
             'trans_id': txid,
-            'success': True
+            'status_code': 200
         }
         return resp
 
@@ -111,7 +111,7 @@ class BigchaindbConnector(BlockchainConnector):
         resp = {
             'asset_id': asset_id,
             'trans_id': txid,
-            'success': True
+            'status_code': 200
         }
         return resp
 

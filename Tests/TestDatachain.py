@@ -76,3 +76,9 @@ print(resp)
 
 odf = dc.getAssetOwnership(aid, res_type='pandas')
 print(odf)
+
+r = dc.getAssetTransactions(aid, res_type='collection', latest=True)
+print(r)
+
+r = dc.getAssetTransactions(aid, res_type='xml', latest=True)
+print(r)

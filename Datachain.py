@@ -1,6 +1,9 @@
 from BigchaindbConnector import BigchaindbConnector
 from HyperledgerConnector import HyperledgerConnector
 
+from dicttoxml import dicttoxml
+import json
+
 import pandas as pd
 
 
@@ -20,7 +23,7 @@ class Datachain():
                 'with given endpoints: ' + str(endpoints) + ' and params: ' + str(params) + '...'
             )
         else:
-            print('Datachain>> Successfully connected to ' + backend + ' with endpoints: ' + str(endpoints) + '...')
+            print('Datachain>> Successfully connected to ' + backend + '...')
 
     def getBackendConfig(self):
         return self.connector.getConnectorConfig()
@@ -113,18 +116,17 @@ class Datachain():
                 r = r.sort_index(ascending=False) #sorting in descending order for recent events first
             return r
 
-        if res_type == 'xml':
-            return res
-
-        if res_type == 'json':
-            return res
-
         # collection
         if latest:
             res = res[-1:]
-            print("hello world")
         if sorting:
             res.reverse()
+
+        if res_type == 'xml':
+            return dicttoxml(res, root=False, attr_type=False)
+
+        if res_type == 'json':
+            return json.dumps(res)
 
         return res
 
