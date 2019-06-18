@@ -6,6 +6,9 @@ import json
 
 import pandas as pd
 
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
 
 class Datachain():
 
@@ -130,6 +133,31 @@ class Datachain():
 
         return res
 
+    def async_query(self, func, params_per_task=None):
+        try:
+            query = getattr(self, func) #convert func name to actual function
+            loop = asyncio.get_event_loop()
+            future = asyncio.ensure_future(self._getDataAsync(query, params_per_task))
+            loop.run_until_complete(future)
+            return future.result()
+        except AttributeError:
+            raise DatachainException('Datachain>> requested query' + func + ' not available...')
+
+    async def _getDataAsync(self, func, params_per_task):
+        responses = []
+        #TODO allow users to define max workers and have as default max cpu core count
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            loop = asyncio.get_event_loop()
+            tasks = [
+                loop.run_in_executor(executor, func, params)
+                for params in params_per_task
+            ]
+            for resp in await asyncio.gather(*tasks):
+                responses.append(resp)
+        return responses
+
+    def somefunc(self, param1):
+        return str(param1)
 
 class DatachainException(Exception):
     pass
