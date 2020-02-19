@@ -33,3 +33,8 @@ Datachain requires a python3 version (tested on v3.7.x). Other required librarie
 
 To use the BigchainDB connector, the bigchaindb_driver is required.
 
+## Reference
+
+When using the framework please use the following reference to cite our work:
+
+Demetris Trihinas. 2019. Datachain: A Query Framework for Blockchains. In Proceedings of the 11th International Conference on Management of Digital EcoSystems (MEDES ’19). Association for Computing Machinery, New York, NY, USA, 134–141. DOI:https://doi.org/10.1145/3297662.3365796
